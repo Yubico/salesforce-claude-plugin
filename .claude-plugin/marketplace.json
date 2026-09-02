@@ -13,7 +13,6 @@
   "plugins": [
     {
       "name": "sf-core",
-      "displayName": "Salesforce",
       "source": "./plugins/sf-core",
       "description": "Skills for Salesforce metadata, Apex, and development workflows",
       "version": "0.2.0",

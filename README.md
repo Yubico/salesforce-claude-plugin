@@ -54,7 +54,7 @@ claude plugin marketplace add ./salesforce-claude-plugin
 Or once pushed to a remote:
 
 ```bash
-claude plugin marketplace add <owner>/salesforce-claude-plugin
+claude plugin marketplace add Yubico/salesforce-claude-plugin
 ```
 
 Install the plugin:
