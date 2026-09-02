@@ -1,0 +1,27 @@
+{
+  "name": "sf-core",
+  "description": "Skills for Salesforce metadata, Apex, and development workflows",
+  "version": "0.2.0",
+  "author": {
+    "name": "Jenna Russwurm",
+    "email": "jenna.russwurm@yubico.com"
+  },
+  "license": "MIT",
+  "keywords": ["salesforce", "apex", "metadata", "sfdx"],
+  "skills": ["./skills/"],
+  "mcpServers": {
+    "sfdx-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@salesforce/mcp@latest",
+        "--orgs",
+        "ALLOW_ALL_ORGS",
+        "--toolsets",
+        "aura-experts,core,data,enrichment,experts-validation,lwc-experts,metadata,orgs,scale-products,testing,users",
+        "--no-telemetry",
+        "--debug"
+      ]
+    }
+  }
+}

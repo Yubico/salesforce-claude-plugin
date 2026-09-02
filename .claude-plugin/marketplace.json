@@ -1,0 +1,23 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "name": "yubico-salesforce",
+  "owner": {
+    "name": "Jenna Russwurm",
+    "email": "jenna.russwurm@yubico.com"
+  },
+  "description": "Claude Code skills for Salesforce development workflows",
+  "version": "0.1.0",
+  "metadata": {
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "sf-core",
+      "displayName": "Salesforce",
+      "source": "./plugins/sf-core",
+      "description": "Skills for Salesforce metadata, Apex, and development workflows",
+      "version": "0.2.0",
+      "license": "MIT"
+    }
+  ]
+}

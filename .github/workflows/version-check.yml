@@ -1,0 +1,20 @@
+name: Plugin version check
+
+on:
+  pull_request:
+    paths:
+      - 'plugins/**'
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: git fetch origin "${{ github.base_ref }}" --depth=1
+
+      - name: Check plugin version was bumped
+        run: bash .github/scripts/check-version-bump.sh "origin/${{ github.base_ref }}"
