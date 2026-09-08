@@ -1,7 +1,7 @@
 {
   "name": "sf-core",
   "description": "Skills for Salesforce metadata, Apex, and development workflows",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "Jenna Russwurm",
     "email": "jenna.russwurm@yubico.com"
@@ -22,6 +22,10 @@
         "--no-telemetry",
         "--debug"
       ]
+    },
+    "atlassian-mcp": {
+      "type": "sse",
+      "url": "https://mcp.atlassian.com/v1/sse"
     }
   }
 }
