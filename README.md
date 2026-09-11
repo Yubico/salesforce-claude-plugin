@@ -22,7 +22,10 @@ salesforce-claude-plugin/
         ├── .claude-plugin/
         │   └── plugin.json    # plugin manifest (skills + MCP servers)
         ├── CHANGELOG.md
-        └── skills/             # (empty — add real Salesforce skills here)
+        └── skills/
+            └── sf-flow-deprecation-review/
+                ├── SKILL.md
+                └── reference/soql-queries.md
 ```
 
 ## MCP servers

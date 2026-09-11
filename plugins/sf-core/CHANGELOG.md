@@ -2,6 +2,15 @@
 
 All notable changes to the `sf-core` plugin are documented here.
 
+## 0.4.0 - 2026-09-11
+
+- Added the `sf-flow-deprecation-review` skill: pulls all Flows and Flow
+  versions from a production org, flags versions that are inactive and
+  unmodified for 12+ months, checks Apex/button/quick action/integration
+  dependencies via the Tooling API plus a static source search, and produces
+  a sign-off report (Safe to Delete / Requires Owner Confirmation / Excluded /
+  Deferred) for a human to confirm before any cleanup.
+
 ## 0.3.0 - 2026-09-08
 
 - Added the `atlassian-mcp` MCP server (`https://mcp.atlassian.com/v1/sse`),
