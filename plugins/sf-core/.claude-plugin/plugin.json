@@ -1,7 +1,7 @@
 {
   "name": "sf-core",
   "description": "Skills for Salesforce metadata, Apex, and development workflows",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": {
     "name": "Jenna Russwurm",
     "email": "jenna.russwurm@yubico.com"
