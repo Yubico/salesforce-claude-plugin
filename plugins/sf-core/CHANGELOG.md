@@ -2,6 +2,14 @@
 
 All notable changes to the `sf-core` plugin are documented here.
 
+## 0.5.0 - 2026-09-18
+
+- `sf-flow-deprecation-review` now delivers its output as a two-sheet Excel
+  (`.xlsx`) workbook instead of a Markdown file: a `Review` sheet with the
+  per-flow-version data table, and an `Information` sheet holding the run
+  metadata and outcome legend that previously appeared as the report's
+  header/footer.
+
 ## 0.4.0 - 2026-09-11
 
 - Added the `sf-flow-deprecation-review` skill: pulls all Flows and Flow

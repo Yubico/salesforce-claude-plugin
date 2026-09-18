@@ -117,10 +117,9 @@ Put this in its own **Business Process Check** column, separate from
 `Dependencies` — it answers "should this still exist" rather than "does
 anything still call it."
 
-## 7. Build the report
+## 7. Build the report data
 
-Render a single Markdown table, one row per candidate flow version, with
-exactly these columns:
+Compute one row per candidate flow version, with exactly these columns:
 
 `Name | Api Name | Version | Status | Last Modified Date | Last Modified By | Created By | Created Date | Type | Object | Dependencies | Business Process Check | Outcome`
 
@@ -141,40 +140,50 @@ exactly these columns:
   version at all — leave `Outcome` blank for the reviewer to assign one of
   the four values in the legend below.
 
-### Report header (above the table)
+## 8. Generate the Excel workbook
+
+Deliver the report as a single `.xlsx` workbook (e.g.
+`flow-deprecation-review_<org-alias>_<YYYY-MM-DD>.xlsx`) in the current
+project directory — never inside the plugin/skill directory. Build it with a
+short Python script (via Bash), using `openpyxl` (`pip install openpyxl` if
+not already available). The workbook has exactly two sheets:
+
+### Sheet 1: `Review`
+
+The data table from step 7 — a header row with the 13 column names, followed
+by one row per candidate flow version. Freeze the header row and
+autosize/wrap columns reasonably so it's readable without manual formatting.
+
+### Sheet 2: `Information`
+
+Holds the run metadata and the outcome legend — the same content that
+previously appeared as the report's header and footer. Lay it out as plain
+rows (label in column A, value in column B where applicable), for example:
 
 ```
 Flow Deprecation Review
-Run Time: <YYYY-MM-DD>, <IANA/local timezone>
-Run Environment: <org alias> (<username>, production)
-Created By: <name/email of the person who requested this review>
+
+Run Time            <YYYY-MM-DD>, <IANA/local timezone>
+Run Environment      <org alias> (<username>, production)
+Created By           <name/email of the person who requested this review>
+
+Each reviewed item should be assigned one of the following outcomes:
+
+Safe to Delete                 — no active dependency and no known business need
+Requires Owner Confirmation    — likely inactive, but ownership or usage is unclear
+Excluded                       — should remain in place, with a documented reason
+Deferred                       — not ready for deletion in the current quarter, but should be reviewed again
 ```
 
 Get the timezone from the local system clock unless the user specifies one.
 For "Created By," ask the user if it isn't already established in the
 conversation — don't assume it's the Salesforce running user.
 
-### Report footer (below the table)
+## 9. Deliver the report
 
-Append exactly this instructional block, verbatim:
-
-```
-Each reviewed item should be assigned one of the following outcomes:
-
-Safe to Delete — no active dependency and no known business need
-
-Requires Owner Confirmation — likely inactive, but ownership or usage is unclear
-
-Excluded — should remain in place, with a documented reason
-
-Deferred — not ready for deletion in the current quarter, but should be reviewed again
-```
-
-## 8. Deliver the report
-
-Show the table in chat, and ask whether the user wants it saved to a file
-(e.g. `flow-deprecation-review_<org-alias>_<YYYY-MM-DD>.md` in the current
-project directory). Don't write files into the plugin/skill directory itself.
+Show the row data in chat as a Markdown table (so the user can review it
+without opening the file), then save the two-sheet workbook and tell the user
+where it was written.
 
 Remind the user this is an analysis artifact only — no flow was deactivated
 or deleted as part of producing it.
