@@ -71,26 +71,26 @@ decision than a version cleanup and should never be auto-defaulted.
 For each candidate flow's API name (`DeveloperName`), check whether anything
 still invokes it:
 
-1. **Structured check** — query `MetadataComponentDependency` (Tooling API,
-   see reference doc) filtered on the flow as the referenced component. This
-   surfaces Apex classes/triggers, other Flows (subflow calls), Quick Actions,
-   Workflow Rules, and other components with a formal metadata dependency.
-2. **Static fallback** — grep the locally retrieved metadata (Apex classes/
+1. **Static search** — grep the locally retrieved metadata (Apex classes/
    triggers, LWC, Aura, other Flow XML, Quick Actions, Custom Buttons/Web
-   Links, Approval Processes, FlexiPages) for the flow's API name. This catches
-   references the dependency API misses — most notably custom buttons/links
-   that invoke a flow by URL, and formula-built flow finish URLs.
-3. **Not fully automatable** — external integration calls (REST/SOAP
+   Links, Approval Processes, FlexiPages) for the flow's API name. This
+   catches references such as custom buttons/links that invoke a flow by URL,
+   formula-built flow finish URLs, subflow calls, and Apex/Quick
+   Action/Workflow Rule references to it. (`MetadataComponentDependency` was
+   tried here previously but reliably returned zero rows for Flow references
+   across every org this skill has been run against, so it's been dropped in
+   favor of the static search alone.)
+2. **Not fully automatable** — external integration calls (REST/SOAP
    invocations of an autolaunched flow, External Services, scheduled/batch
    triggers configured outside metadata) can't be verified from metadata
-   alone. State this limitation **once**, on the Information sheet (step 8) —
+   alone. State this limitation **once**, on the Notes sheet (step 8) —
    do not repeat it in every row's `Dependencies` cell, since that's pure
    boilerplate padding once it's said once.
 
 Populate the `Dependencies` column with only what was actually found for that
-specific flow (component type + name), or `"None found (structured + static
-search)"` if both checks came back empty — never claim "no dependencies"
-without qualifying how that was checked.
+specific flow (component type + name), or `"None found (static search)"` if
+the search came back empty — never claim "no dependencies" without
+qualifying how that was checked.
 
 ## 5. Deployment / package / admin reliance check
 
@@ -149,7 +149,7 @@ Deliver the report as a single `.xlsx` workbook (e.g.
 `flow-deprecation-review_<org-alias>_<YYYY-MM-DD>.xlsx`) in the current
 project directory — never inside the plugin/skill directory. Build it with a
 short Python script (via Bash), using `openpyxl` (`pip install openpyxl` if
-not already available). The workbook has exactly two sheets:
+not already available). The workbook has exactly three sheets:
 
 ### Sheet 1: `Review`
 
@@ -159,9 +159,9 @@ autosize/wrap columns reasonably so it's readable without manual formatting.
 
 ### Sheet 2: `Information`
 
-Holds the run metadata and the outcome legend — the same content that
-previously appeared as the report's header and footer. Lay it out as plain
-rows (label in column A, value in column B where applicable), for example:
+Holds the run metadata and the outcome legend. Lay it out as plain rows
+(label in column A, value in column B where applicable), with every column A
+label **bold**, for example:
 
 ```
 Flow Deprecation Review
@@ -171,16 +171,35 @@ Run Environment      <org alias> (<username>, production)
 Created By           <name/email of the person who requested this review>
 
 Each reviewed item should be assigned one of the following outcomes:
-
 Safe to Delete    — no active dependency and no known business need
 Keep              — should remain in place (packaged, still in active use, ownership/usage unclear, or not ready for cleanup this cycle) — see the Business Process Check / Dependencies columns for the specific reason
-
-Note: dependency checks cannot detect external integration calls (REST/SOAP
-invocations of an autolaunched flow, External Services, scheduled/batch
-triggers configured outside metadata) — a "None found" Dependencies cell
-means nothing was found via the Tooling API or static source search, not
-that the flow is provably unused.
 ```
+
+### Sheet 3: `Notes`
+
+Holds caveats, limitations, and any other supplementary context gathered
+during the review (e.g. the external-integration dependency limitation from
+step 4, known limitations of the `MetadataComponentDependency` check for this
+org, Jira/Confluence tracking links from step 6, prior human sign-off
+history). Same plain label/value layout as the Information sheet, bold
+column A labels, one item per row, for example:
+
+```
+Note                 dependency checks cannot detect external integration calls
+                     (REST/SOAP invocations of an autolaunched flow, External
+                     Services, scheduled/batch triggers configured outside
+                     metadata) — a "None found" Dependencies cell means nothing
+                     was found via the Tooling API or static source search, not
+                     that the flow is provably unused.
+Known limitation     <e.g. MetadataComponentDependency filtered by
+                     RefMetadataComponentType = 'Flow' returned zero rows in
+                     this org — relied on static source grep fallback instead>
+Tracking             <Jira/Confluence links found in step 6, if any>
+Prior human sign-off <details of any prior manual review found in step 6, if any>
+```
+
+Only include rows for what's actually applicable to this run — don't pad the
+sheet with placeholder rows for categories that turned up nothing.
 
 Get the timezone from the local system clock unless the user specifies one.
 For "Created By," ask the user if it isn't already established in the
