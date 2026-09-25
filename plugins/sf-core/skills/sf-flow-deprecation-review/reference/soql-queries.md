@@ -48,16 +48,25 @@ ORDER BY VersionNumber
 SELECT MetadataComponentId, MetadataComponentName, MetadataComponentType,
        RefMetadataComponentId, RefMetadataComponentName, RefMetadataComponentType
 FROM MetadataComponentDependency
-WHERE RefMetadataComponentName = '<flowApiName>'
-  AND RefMetadataComponentType = 'Flow'
+WHERE RefMetadataComponentType = 'Flow'
 ```
 
-Returns every component that formally references the flow (Apex classes
+Run this **once, unfiltered by name**, and match each candidate's
+`RefMetadataComponentName` against the result set in memory — do not issue
+one query per flow. `RefMetadataComponentName` is not a filterable field in
+every org's API version (it has been observed to error as "unknown field"),
+so filtering server-side by name is not reliable; filtering only by
+`RefMetadataComponentType` and joining locally works everywhere and is also
+far fewer round-trips across 100+ candidate flows.
+
+Returns every component that formally references a flow (Apex classes
 calling it as an invocable action, other Flows via Subflow, Quick Actions,
 Workflow Rules/Process Builder flows, etc.). Not every org/edition has this
-object populated — if the query errors or returns nothing where you'd expect
-hits, fall back to the static search below and say so in the report rather
-than reporting a false "no dependencies."
+object populated for Flow refs — this has been observed to return zero rows
+org-wide in at least one org even though flows are demonstrably referenced
+elsewhere. If the query errors, or returns zero rows where you'd expect hits,
+fall back to the static search below and say so explicitly in the report
+rather than reporting a false "no dependencies."
 
 ## Admin/deploy activity heuristic
 
@@ -76,10 +85,10 @@ corroborating evidence, not proof.
 ## Static source fallback (grep)
 
 After `retrieve_metadata` has pulled a local copy, search across it for the
-flow's API name as a plain string:
+flow's API name:
 
 ```bash
-grep -rl "<flowApiName>" \
+grep -rlE "(^|[^A-Za-z0-9_])<flowApiName>([^A-Za-z0-9_]|$)" \
   force-app/main/default/classes \
   force-app/main/default/triggers \
   force-app/main/default/flows \
@@ -91,6 +100,15 @@ grep -rl "<flowApiName>" \
   force-app/main/default/aura \
   2>/dev/null
 ```
+
+Do **not** use a plain substring match (`grep -rl "<flowApiName>"`) or `grep
+-w` — flow API names use underscores, which count as "word" characters, so
+neither approach stops one flow's name from matching inside a longer flow
+name that has it as a prefix (e.g. searching for `Account_Creation` would
+also match every occurrence of `Account_Creation_Shipping_Address_Same_as_Billing`,
+producing a false-positive dependency hit). The `(^|[^A-Za-z0-9_])...([^A-Za-z0-9_]|$)`
+pattern explicitly requires a non-identifier character (or line start/end) on
+both sides of the match.
 
 Adjust the paths to match the project's actual `sfdx-project.json` package
 directories. For custom buttons/web links specifically, also check the `<url>`
