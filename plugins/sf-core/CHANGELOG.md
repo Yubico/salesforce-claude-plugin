@@ -2,6 +2,28 @@
 
 All notable changes to the `sf-core` plugin are documented here.
 
+## 0.6.0 - 2026-09-25
+
+- `sf-flow-deprecation-review`: simplified the sign-off outcome legend from
+  four values down to two — `Safe to Delete` / `Keep` — and fixed the
+  `"Safe to delete"` vs. `"Safe to Delete"` casing mismatch between the
+  auto-fill logic and the legend.
+- Fixed the frontmatter `description` field, which was invalid YAML (an
+  unquoted plain scalar containing a bare `:`) and failed to parse on
+  GitHub's stricter renderer.
+- Fixed the structured `MetadataComponentDependency` dependency check:
+  `RefMetadataComponentName` is not a filterable field in every org's API
+  version; the query now filters only on `RefMetadataComponentType = 'Flow'`
+  once and matches by name in memory, instead of one query per candidate flow.
+- Fixed the static-search grep pattern, which was a plain substring match and
+  produced false-positive dependency hits when one flow's API name is a
+  prefix of another's; it now requires identifier boundaries.
+- Step 9 (deliver the report) now caps the in-chat Markdown table at ~100
+  rows, above which it summarizes (flagged rows in full, the rest as counts)
+  and points to the xlsx instead of pasting an unreadable wall of text.
+- The "external integrations can't be verified" caveat is now stated once on
+  the Information sheet instead of repeated in every row's `Dependencies` cell.
+
 ## 0.5.0 - 2026-09-18
 
 - `sf-flow-deprecation-review` now delivers its output as a two-sheet Excel

@@ -1,6 +1,6 @@
 ---
 name: sf-flow-deprecation-review
-description: Use when asked to audit, review, or clean up Salesforce Flows for deprecation/retirement — e.g. "flow deprecation review", "find unused/inactive flows", "which flows are safe to delete", "flow cleanup audit". Pulls all flows and flow versions from a production org, flags versions that are inactive and unmodified for 12+ months, checks Apex/button/quick-action/integration dependencies via the Tooling API plus static source search, and produces a sign-off report table (Outcome column: Safe to Delete / Requires Owner Confirmation / Excluded / Deferred). This skill only reports — it never deactivates or deletes anything.
+description: 'Use when asked to audit, review, or clean up Salesforce Flows for deprecation/retirement — e.g. "flow deprecation review", "find unused/inactive flows", "which flows are safe to delete", "flow cleanup audit". Pulls all flows and flow versions from a production org, flags versions that are inactive and unmodified for 12+ months, checks Apex/button/quick-action/integration dependencies via the Tooling API plus static source search, and produces a sign-off report table (Outcome column: Safe to Delete / Keep). This skill only reports — it never deactivates or deletes anything.'
 ---
 
 # Salesforce Flow Deprecation Review
@@ -83,17 +83,20 @@ still invokes it:
 3. **Not fully automatable** — external integration calls (REST/SOAP
    invocations of an autolaunched flow, External Services, scheduled/batch
    triggers configured outside metadata) can't be verified from metadata
-   alone. Say so explicitly in the report rather than assuming "not invoked."
+   alone. State this limitation **once**, on the Information sheet (step 8) —
+   do not repeat it in every row's `Dependencies` cell, since that's pure
+   boilerplate padding once it's said once.
 
-Populate the `Dependencies` column with what was found (component type +
-name), or `"None found (structured + static search)"` if both checks came back
-empty — never claim "no dependencies" without qualifying how that was checked.
+Populate the `Dependencies` column with only what was actually found for that
+specific flow (component type + name), or `"None found (structured + static
+search)"` if both checks came back empty — never claim "no dependencies"
+without qualifying how that was checked.
 
 ## 5. Deployment / package / admin reliance check
 
 - If `FlowDefinition.NamespacePrefix` is populated, the flow belongs to a
   managed/unlocked package — do not treat it as a deletion candidate; note
-  this in the report and steer its `Outcome` toward `Excluded`.
+  this in the report and steer its `Outcome` toward `Keep`.
 - Query `SetupAuditTrail` (see reference doc) for recent entries mentioning
   the flow's name, as a heuristic for recent admin/deploy activity that
   wouldn't otherwise show up as a `LastModifiedDate` change.
@@ -128,7 +131,7 @@ Compute one row per candidate flow version, with exactly these columns:
 - **Object** — the primary object from the flow's `<start>`/trigger
   definition in the retrieved XML; `N/A` for flows with no object (e.g.
   screen flows not tied to a record).
-- **Outcome** — leave **blank** by default. Auto-fill `"Safe to delete"`
+- **Outcome** — leave **blank** by default. Auto-fill `"Safe to Delete"`
   *only* when **all** of these hold:
   - the version is inactive and unmodified for 12+ months (step 3), **and**
   - its FlowDefinition has a currently active *different* version (step 3's
@@ -138,7 +141,7 @@ Compute one row per candidate flow version, with exactly these columns:
 
   In every other case — including a flow whose FlowDefinition has *no* active
   version at all — leave `Outcome` blank for the reviewer to assign one of
-  the four values in the legend below.
+  the two values in the legend below.
 
 ## 8. Generate the Excel workbook
 
@@ -169,10 +172,14 @@ Created By           <name/email of the person who requested this review>
 
 Each reviewed item should be assigned one of the following outcomes:
 
-Safe to Delete                 — no active dependency and no known business need
-Requires Owner Confirmation    — likely inactive, but ownership or usage is unclear
-Excluded                       — should remain in place, with a documented reason
-Deferred                       — not ready for deletion in the current quarter, but should be reviewed again
+Safe to Delete    — no active dependency and no known business need
+Keep              — should remain in place (packaged, still in active use, ownership/usage unclear, or not ready for cleanup this cycle) — see the Business Process Check / Dependencies columns for the specific reason
+
+Note: dependency checks cannot detect external integration calls (REST/SOAP
+invocations of an autolaunched flow, External Services, scheduled/batch
+triggers configured outside metadata) — a "None found" Dependencies cell
+means nothing was found via the Tooling API or static source search, not
+that the flow is provably unused.
 ```
 
 Get the timezone from the local system clock unless the user specifies one.
@@ -184,6 +191,15 @@ conversation — don't assume it's the Salesforce running user.
 Show the row data in chat as a Markdown table (so the user can review it
 without opening the file), then save the two-sheet workbook and tell the user
 where it was written.
+
+If there are more than ~100 candidate rows, pasting the full table becomes an
+unreadable wall of text rather than something reviewable in chat. In that
+case, summarize instead: give the total/unique-flow counts, the full table
+for any individually flagged or notable rows (packaged components, discrepancies
+against prior reports, documented business processes, etc.), and a compact
+breakdown of the rest (e.g. counts by `Type`/`Object`/`Outcome`). Say
+explicitly that you summarized because of the row count and that the xlsx
+has the complete detail — never silently drop rows without saying so.
 
 Remind the user this is an analysis artifact only — no flow was deactivated
 or deleted as part of producing it.
