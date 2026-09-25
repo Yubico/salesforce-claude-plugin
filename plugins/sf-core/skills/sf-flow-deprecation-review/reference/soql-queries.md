@@ -1,8 +1,8 @@
 # SOQL & search patterns for the flow deprecation review
 
 All queries below run through `run_soql_query` with `useToolingApi: true`
-unless noted otherwise, since `Flow`, `FlowDefinition`, and
-`MetadataComponentDependency` are Tooling API-only objects.
+unless noted otherwise, since `Flow` and `FlowDefinition` are Tooling
+API-only objects.
 
 ## Flow family / activation state
 
@@ -42,32 +42,6 @@ WHERE DefinitionId = '<flowDefinitionId>'
 ORDER BY VersionNumber
 ```
 
-## Structured dependency check
-
-```sql
-SELECT MetadataComponentId, MetadataComponentName, MetadataComponentType,
-       RefMetadataComponentId, RefMetadataComponentName, RefMetadataComponentType
-FROM MetadataComponentDependency
-WHERE RefMetadataComponentType = 'Flow'
-```
-
-Run this **once, unfiltered by name**, and match each candidate's
-`RefMetadataComponentName` against the result set in memory — do not issue
-one query per flow. `RefMetadataComponentName` is not a filterable field in
-every org's API version (it has been observed to error as "unknown field"),
-so filtering server-side by name is not reliable; filtering only by
-`RefMetadataComponentType` and joining locally works everywhere and is also
-far fewer round-trips across 100+ candidate flows.
-
-Returns every component that formally references a flow (Apex classes
-calling it as an invocable action, other Flows via Subflow, Quick Actions,
-Workflow Rules/Process Builder flows, etc.). Not every org/edition has this
-object populated for Flow refs — this has been observed to return zero rows
-org-wide in at least one org even though flows are demonstrably referenced
-elsewhere. If the query errors, or returns zero rows where you'd expect hits,
-fall back to the static search below and say so explicitly in the report
-rather than reporting a false "no dependencies."
-
 ## Admin/deploy activity heuristic
 
 ```sql
@@ -82,7 +56,13 @@ LIMIT 50
 6 months), so a miss here doesn't prove nothing recent happened — treat it as
 corroborating evidence, not proof.
 
-## Static source fallback (grep)
+## Static source search (grep)
+
+Note: an earlier version of this skill also queried
+`MetadataComponentDependency` (Tooling API) as a structured check before
+falling back to this grep. That query has been dropped — it reliably
+returned zero rows for Flow references across every org this skill has been
+run against, so this static search is now the sole dependency check.
 
 After `retrieve_metadata` has pulled a local copy, search across it for the
 flow's API name:
